@@ -53,19 +53,17 @@ func migrateDb() {
 func initRouter() {
 	router := mux.NewRouter()
 
-	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
-	originsOk := handlers.AllowedOrigins([]string{"*"})
-	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"})
+	headers := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
+	origins := handlers.AllowedOrigins([]string{"*"})
+	methodsO:= handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"})
 
 	router.HandleFunc("/classOffers", getClassOffers).Methods("GET") //has url query params
 	router.HandleFunc("/classOffers", createClassOffer).Methods("POST")
 	router.HandleFunc("/classOffers/{id}", updateClassOffer).Methods("PUT")
 	router.HandleFunc("/classOffers/{id}", deleteClassOffer).Methods("DELETE")
 
-	portNo := 9021
-
-	fmt.Printf("ClassOffer Microservice running on port %s...\n", portNo)
-	err := http.ListenAndServe(":"+portNo, handlers.CORS(originsOk, headersOk, methodsOk)(router))
+	fmt.Printf("ClassOffer Microservice running on port 9021\n")
+	err := http.ListenAndServe(":"+portNo, handlers.CORS(origins, headers, methods)(router))
 	if err != nil {
 		panic("InitRouter failed with error: " + err.Error())
 	}
@@ -80,16 +78,16 @@ func getClassOffers(w http.ResponseWriter, r *http.Request) {
 	var classOffers []ClassOffer
 
 	urlParams := r.URL.Query()
-	queryWant, haveWant := urlParams["want"]
-	queryOffer, haveOffer := urlParams["offer"]
+	queryWant, Want := urlParams["want"]
+	queryOffer, Offer := urlParams["offer"]
 
-	if haveWant && !haveOffer {
+	if Want && !Offer {
 		want := queryWant[0]
 		db.Where("want = ?", want).Find(&classOffers)
-	} else if !haveWant && haveOffer {
+	} else if !Want && Offer {
 		offer := queryOffer[0]
 		db.Where("offer = ?", offer).Find(&classOffers)
-	} else if haveWant && haveOffer {
+	} else if Want && Offer {
 		want := queryWant[0]
 		offer := queryOffer[0]
 		db.Where("want = ? AND offer = ?", want, offer).Find(&classOffers)
@@ -110,7 +108,7 @@ func createClassOffer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//validate empty fields
-	if isFieldMissing(w, classOffer.CreatedBy, "createdBy") ||
+	if isFieldMissing(w, classOffer.StudentID, "studentID") ||
 		isFieldMissing(w, classOffer.Want, "want") ||
 		isFieldMissing(w, classOffer.Offer, "offer") {
 		return
@@ -118,10 +116,10 @@ func createClassOffer(w http.ResponseWriter, r *http.Request) {
 
 	//Disallow manual setting of Id
 	//GORM will automatically assign Id if it is zero value
-	classOffer.Id = 0
+	classOffer.ID = 0
 
 	//Offers should be incomplete on creation
-	classOffer.CompletedBy = ""
+	classOffer.StudentID = ""
 
 	dbErr := db.Create(&classOffer).Error
 	if dbErr != nil {
