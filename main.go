@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
-	"os"
 	"reflect"
 
 	"github.com/gorilla/handlers"
@@ -14,7 +14,7 @@ import (
 )
 
 type ClassOffer struct {
-	ID         int    `gorm:"primaryKey"`
+	ID          int    `gorm:"primaryKey"`
 	StudentID   string //studentId
 	Offer       string
 	Want        string
@@ -24,12 +24,6 @@ type ClassOffer struct {
 var db *gorm.DB
 
 func main() {
-	initDb()
-	migrateDb()
-	initRouter()
-}
-
-func initDb() {
 	dsn := "user:password@tcp(127.0.0.1:3306)/Assignment2?charset=utf8mb4&parseTime=True&loc=Local"
 
 	var err error
@@ -39,6 +33,22 @@ func initDb() {
 	if err != nil {
 		panic("Failed to connect to database with DSN: " + dsn)
 	}
+
+	migrateDb()
+
+	router := mux.NewRouter()
+
+	headers := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
+	origins := handlers.AllowedOrigins([]string{"*"})
+	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"})
+
+	router.HandleFunc("/classOffers", getClassOffers).Methods("GET") //has url query params
+	router.HandleFunc("/classOffers", createClassOffers).Methods("POST")
+	router.HandleFunc("/classOffers/{id}", updateClassOffers).Methods("PUT")
+	router.HandleFunc("/classOffers/{id}", deleteClassOffers).Methods("DELETE")
+
+	fmt.Printf("ClassOffer Microservice running on port 9021...\n")
+	log.Fatal(http.ListenAndServe(":9021", handlers.CORS(headers, methods, origins)(router)))
 }
 
 func migrateDb() {
@@ -50,24 +60,6 @@ func migrateDb() {
 	}
 }
 
-func initRouter() {
-	router := mux.NewRouter()
-
-	headers := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
-	origins := handlers.AllowedOrigins([]string{"*"})
-	methodsO:= handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"})
-
-	router.HandleFunc("/classOffers", getClassOffers).Methods("GET") 
-	router.HandleFunc("/classOffers", createClassOffers).Methods("POST")
-	router.HandleFunc("/classOffers/{id}", updateClassOffers).Methods("PUT")
-	router.HandleFunc("/classOffers/{id}", deleteClassOffers).Methods("DELETE")
-
-	fmt.Printf("ClassOffer Microservice running on port 9021\n")
-	err := http.ListenAndServe(":"+portNo, handlers.CORS(origins, headers, methods)(router))
-	if err != nil {
-		panic("InitRouter failed with error: " + err.Error())
-	}
-}
 /////////////////////////
 //                     //
 //    HTTP Functions   //
