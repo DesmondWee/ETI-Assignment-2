@@ -57,10 +57,10 @@ func initRouter() {
 	origins := handlers.AllowedOrigins([]string{"*"})
 	methodsO:= handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"})
 
-	router.HandleFunc("/classOffers", getClassOffers).Methods("GET") //has url query params
-	router.HandleFunc("/classOffers", createClassOffer).Methods("POST")
-	router.HandleFunc("/classOffers/{id}", updateClassOffer).Methods("PUT")
-	router.HandleFunc("/classOffers/{id}", deleteClassOffer).Methods("DELETE")
+	router.HandleFunc("/classOffers", getClassOffers).Methods("GET") 
+	router.HandleFunc("/classOffers", createClassOffers).Methods("POST")
+	router.HandleFunc("/classOffers/{id}", updateClassOffers).Methods("PUT")
+	router.HandleFunc("/classOffers/{id}", deleteClassOffers).Methods("DELETE")
 
 	fmt.Printf("ClassOffer Microservice running on port 9021\n")
 	err := http.ListenAndServe(":"+portNo, handlers.CORS(origins, headers, methods)(router))
@@ -98,7 +98,7 @@ func getClassOffers(w http.ResponseWriter, r *http.Request) {
 	httpRespondWith(w, http.StatusOK, classOffers)
 }
 
-func createClassOffer(w http.ResponseWriter, r *http.Request) {
+func createClassOffers(w http.ResponseWriter, r *http.Request) {
 	var classOffer ClassOffer
 
 	decodeErr := json.NewDecoder(r.Body).Decode(&classOffer)
@@ -130,7 +130,7 @@ func createClassOffer(w http.ResponseWriter, r *http.Request) {
 	httpRespondWith(w, http.StatusOK, classOffer)
 }
 
-func updateClassOffer(w http.ResponseWriter, r *http.Request) {
+func updateClassOffers(w http.ResponseWriter, r *http.Request) {
 	var classOffer ClassOffer
 
 	decodeErr := json.NewDecoder(r.Body).Decode(&classOffer)
@@ -155,7 +155,7 @@ func updateClassOffer(w http.ResponseWriter, r *http.Request) {
 	httpRespondWith(w, http.StatusOK, newClassOffer)
 }
 
-func deleteClassOffer(w http.ResponseWriter, r *http.Request) {
+func deleteClassOffers(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
 
